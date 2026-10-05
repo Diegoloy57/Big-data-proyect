@@ -1,0 +1,32 @@
+# Datos descargados
+data/raw/*
+data/processed/*
+
+# Mantener carpetas vacías
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Credenciales
+kaggle.json
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Entornos virtuales
+venv/
+.venv/
+
+# IDE
+.vscode/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
