@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import time
+from dask.distributed import Client
 
 import dask.dataframe as dd
 import numpy as np
@@ -20,7 +21,7 @@ DATASET_PATH = (
     / "Crime_Data_from_2020_to_Present.parquet"
 )
 
-MONGO_URI = "mongodb://localhost:27017"
+MONGO_URI = "mongodb://mongo:27017"
 DATABASE_NAME = "crime_db"
 COLLECTION_NAME = "crimes"
 
@@ -105,6 +106,12 @@ def main():
     print("========================================")
 
     print("\n1. Leyendo dataset con Dask...")
+
+    client = Client("tcp://dask-scheduler:8786")
+
+    print("Cliente conectado al cluster Dask.")
+    print(client)
+
 
     df = dd.read_parquet(
         DATASET_PATH,

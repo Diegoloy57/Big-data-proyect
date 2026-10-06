@@ -4,18 +4,65 @@ services:
     image: mongo:7.0
     container_name: bigdata-mongo
     restart: unless-stopped
-
     ports:
       - "27017:27017"
-
     volumes:
       - mongo_data:/data/db
-
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  dask-scheduler:
+    build:
+      context: .
+      dockerfile: docker/dask.Dockerfile
+    container_name: bigdata-dask-scheduler
+    command: dask scheduler
+    ports:
+      - "8786:8786"
+      - "8787:8787"
+    volumes:
+      - .:/app
+    depends_on:
+      - mongo
+
+  dask-worker-1:
+    build:
+      context: .
+      dockerfile: docker/dask.Dockerfile
+    container_name: bigdata-dask-worker-1
+    command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 1GB
+    volumes:
+      - .:/app
+    depends_on:
+      - dask-scheduler
+
+  dask-worker-2:
+    build:
+      context: .
+      dockerfile: docker/dask.Dockerfile
+    container_name: bigdata-dask-worker-2
+    command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 1GB
+    volumes:
+      - .:/app
+    depends_on:
+      - dask-scheduler
+
+  dask-client:
+    build:
+      context: .
+      dockerfile: docker/dask.Dockerfile
+    container_name: bigdata-dask-client
+    command: python dask/ingest.py
+    volumes:
+      - .:/app
+    depends_on:
+      - dask-scheduler
+      - dask-worker-1
+      - dask-worker-2
+      - mongo
 
 volumes:
   mongo_data:
