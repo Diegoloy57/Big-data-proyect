@@ -44,7 +44,7 @@ services:
       context: .
       dockerfile: docker/dask.Dockerfile
     container_name: bigdata-dask-worker-2
-    command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 1GB
+    command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 2GB
     volumes:
       - .:/app
     depends_on:
@@ -63,6 +63,39 @@ services:
       - dask-worker-1
       - dask-worker-2
       - mongo
+
+  spark-master:
+    build:
+      context: .
+      dockerfile: docker/spark.Dockerfile
+    container_name: bigdata-spark-master
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.master.Master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    volumes:
+      - .:/app
+    depends_on:
+      - mongo
+
+  spark-worker:
+    build:
+      context: .
+      dockerfile: docker/spark.Dockerfile
+    container_name: bigdata-spark-worker
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+    environment:
+      - SPARK_WORKER_MEMORY=1g
+      - SPARK_WORKER_CORES=2
+    volumes:
+      - .:/app
+    depends_on:
+      - spark-master
 
 volumes:
   mongo_data:
