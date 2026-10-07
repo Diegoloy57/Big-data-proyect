@@ -33,7 +33,7 @@ services:
       context: .
       dockerfile: docker/dask.Dockerfile
     container_name: bigdata-dask-worker-1
-    command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 1GB
+    command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 2GB
     volumes:
       - .:/app
     depends_on:
@@ -55,9 +55,13 @@ services:
       context: .
       dockerfile: docker/dask.Dockerfile
     container_name: bigdata-dask-client
-    command: python dask/ingest.py
+    command: sh -lc "
+      python scripts/download_dataset.py &&
+      python dask/ingest.py
+      "
     volumes:
       - .:/app
+      - /c/Users/famil/.kaggle:/root/.kaggle:ro
     depends_on:
       - dask-scheduler
       - dask-worker-1
