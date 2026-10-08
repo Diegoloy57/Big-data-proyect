@@ -14,6 +14,7 @@ services:
       timeout: 5s
       retries: 5
 
+
   dask-scheduler:
     build:
       context: .
@@ -23,10 +24,9 @@ services:
     ports:
       - "8786:8786"
       - "8787:8787"
-    volumes:
-      - .:/app
     depends_on:
       - mongo
+
 
   dask-worker-1:
     build:
@@ -35,9 +35,10 @@ services:
     container_name: bigdata-dask-worker-1
     command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 2GB
     volumes:
-      - .:/app
+      - dataset_data:/app/data
     depends_on:
       - dask-scheduler
+
 
   dask-worker-2:
     build:
@@ -46,27 +47,29 @@ services:
     container_name: bigdata-dask-worker-2
     command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 2GB
     volumes:
-      - .:/app
+      - dataset_data:/app/data
     depends_on:
       - dask-scheduler
+
 
   dask-client:
     build:
       context: .
       dockerfile: docker/dask.Dockerfile
     container_name: bigdata-dask-client
-    command: sh -lc "
+    command: >
+      sh -lc "
       python scripts/download_dataset.py &&
       python dask/ingest.py
       "
     volumes:
-      - .:/app
-      - /c/Users/famil/.kaggle:/root/.kaggle:ro
+      - dataset_data:/app/data
     depends_on:
       - dask-scheduler
       - dask-worker-1
       - dask-worker-2
       - mongo
+
 
   spark-master:
     build:
@@ -79,10 +82,9 @@ services:
     ports:
       - "7077:7077"
       - "8080:8080"
-    volumes:
-      - .:/app
     depends_on:
       - mongo
+
 
   spark-worker:
     build:
@@ -96,48 +98,39 @@ services:
     environment:
       - SPARK_WORKER_MEMORY=1g
       - SPARK_WORKER_CORES=2
-    volumes:
-      - .:/app
     depends_on:
       - spark-master
+
+
   api:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
-
     container_name: bigdata-api
-
     ports:
       - "5000:5000"
-
     environment:
       - MONGO_URI=mongodb://mongo:27017
-
-    volumes:
-      - .:/app
-
     depends_on:
       - mongo
-
     restart: unless-stopped
+
 
   jenkins:
     build:
       context: .
       dockerfile: docker/jenkins.Dockerfile
-
     container_name: bigdata-jenkins
-
     ports:
       - "8081:8080"
       - "50000:50000"
-
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - .:/workspace
+    restart: unless-stopped
 
-    restart: unless-stopped  
+
 volumes:
- mongo_data:
- jenkins_home:
+  mongo_data:
+  dataset_data:
+  jenkins_home:
