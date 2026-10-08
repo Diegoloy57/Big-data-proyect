@@ -2,35 +2,52 @@ pipeline {
 
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+        timestamps()
+    }
+
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Descargando código desde GitHub...'
+                echo '1. Descargando código desde GitHub...'
                 checkout scm
             }
         }
 
         stage('Verificar entorno') {
             steps {
-                echo 'Verificando Git...'
-                sh 'git --version'
+                echo '2. Verificando herramientas...'
 
-                echo 'Verificando Docker...'
-                sh 'docker --version'
-
-                echo 'Verificando Docker Compose...'
-                sh 'docker compose version'
+                sh '''
+                    git --version
+                    docker --version
+                    docker compose version
+                '''
             }
         }
 
-        stage('Verificar archivos') {
+        stage('Validar Compose') {
             steps {
-                echo 'Contenido del repositorio:'
-                sh 'ls -la'
+                echo '3. Validando docker-compose.yml...'
 
-                echo 'Validando docker-compose.yml...'
-                sh 'docker compose config --services'
+                sh '''
+                    docker compose config --services
+                '''
+            }
+        }
+
+        stage('Build imágenes') {
+            steps {
+                echo '4. Construyendo imágenes del proyecto...'
+
+                sh '''
+                    docker compose build \
+                        api \
+                        dask-client \
+                        spark-master
+                '''
             }
         }
     }
@@ -38,11 +55,17 @@ pipeline {
     post {
 
         success {
-            echo 'PIPELINE DE PRUEBA EXITOSO'
+            echo '========================================'
+            echo 'PIPELINE BUILD EXITOSO'
+            echo 'GitHub + Docker + Compose + Build OK'
+            echo '========================================'
         }
 
         failure {
-            echo 'PIPELINE DE PRUEBA FALLÓ'
+            echo '========================================'
+            echo 'PIPELINE FALLÓ'
+            echo 'Revisar etapa y salida de consola'
+            echo '========================================'
         }
     }
 }
