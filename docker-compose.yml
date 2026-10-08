@@ -35,7 +35,11 @@ services:
     container_name: bigdata-dask-worker-1
     command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 2GB
     volumes:
-      - dataset_data:/app/data
+      - type: volume
+        source: dataset_data
+        target: /app/data
+        volume:
+          nocopy: true
     depends_on:
       - dask-scheduler
 
@@ -47,7 +51,11 @@ services:
     container_name: bigdata-dask-worker-2
     command: dask worker tcp://dask-scheduler:8786 --nthreads 1 --memory-limit 2GB
     volumes:
-      - dataset_data:/app/data
+      - type: volume
+        source: dataset_data
+        target: /app/data
+        volume:
+          nocopy: true
     depends_on:
       - dask-scheduler
 
@@ -63,7 +71,11 @@ services:
       python dask/ingest.py
       "
     volumes:
-      - dataset_data:/app/data
+      - type: volume
+        source: dataset_data
+        target: /app/data
+        volume:
+          nocopy: true
     depends_on:
       - dask-scheduler
       - dask-worker-1
