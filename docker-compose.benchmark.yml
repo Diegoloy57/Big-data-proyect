@@ -1,0 +1,47 @@
+services:
+
+  spark-master:
+    cpus: 1.0
+    mem_limit: 1g
+    volumes:
+      - type: volume
+        source: dataset_data
+        target: /app/data
+        volume:
+          nocopy: true
+
+  spark-worker:
+    cpus: 1.0
+    mem_limit: 1g
+    environment:
+      - SPARK_WORKER_MEMORY=768m
+      - SPARK_WORKER_CORES=1
+    volumes:
+      - type: volume
+        source: dataset_data
+        target: /app/data
+        volume:
+          nocopy: true
+
+  spark-worker-2:
+    build:
+      context: .
+      dockerfile: docker/spark.Dockerfile
+    container_name: bigdata-spark-worker-2
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+    cpus: 1.0
+    mem_limit: 1g
+    environment:
+      - SPARK_WORKER_MEMORY=768m
+      - SPARK_WORKER_CORES=1
+    depends_on:
+      - spark-master
+    volumes:
+      - type: volume
+        source: dataset_data
+        target: /app/data
+        volume:
+          nocopy: true
